@@ -4,10 +4,10 @@
 
 # Results
 <p float="left">
-<img src="https://github.com/eurusebr/FeedBack/blob/master/HDNLS(3.7).jpg" alt="alt text" width="480">
-<img src="https://github.com/eurusebr/FeedBack/blob/master/HDNLS(4).jpg" alt="alt text" width="480">
-<img src="https://github.com/eurusebr/FeedBack/blob/master/HDNLS(5).jpg" alt="alt text" width="480">
-<img src="https://github.com/eurusebr/FeedBack/blob/master/HDNLS(8).jpg" alt="alt text" width="480">
+<img src="https://github.com/eurusebr/FeedBack/blob/master/HDNLS(3.7).jpg" alt="alt text" width="400">
+<img src="https://github.com/eurusebr/FeedBack/blob/master/HDNLS(4).jpg" alt="alt text" width="400">
+<img src="https://github.com/eurusebr/FeedBack/blob/master/HDNLS(5).jpg" alt="alt text" width="400">
+<img src="https://github.com/eurusebr/FeedBack/blob/master/HDNLS(8).jpg" alt="alt text" width="400">
 </p>
 
 
