@@ -3,6 +3,8 @@
 
 
 # Results
+In this simulation, first, I have modeled the discrete nonlinear schrodinger equation using Euler- Mayaruma method. this model has a phase transition for order parameter alpha which has been seen numerically.
+
 <p float="left">
 <img src="https://github.com/eurusebr/FeedBack/blob/master/HDNLS(3.7).jpg" alt="alt text" width="400">
 <img src="https://github.com/eurusebr/FeedBack/blob/master/HDNLS(4).jpg" alt="alt text" width="400">
