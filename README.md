@@ -1,9 +1,16 @@
 # Stochastic FeedBack
 <a href = "https://github.com/zaman13/Brownian-dynamics-in-a-time-varying-force-field/tree/main/Codes"> <img src="https://img.shields.io/badge/Language-C++ & Python-orange" alt="alt text"> </a>
 
+The Discrete Nonlinear Schrödinger Equation (DNLS) is a mathematical model that describes the behavior of nonlinear waves in discrete systems, such as lattices, optical fibers, and Bose-Einstein condensates. The equation incorporates both linear and nonlinear terms, and its behavior is influenced by the interaction between waves and their nonlinear interactions. Unlike the linear Schrödinger equation, the DNLS equation predicts the emergence of localized structures such as solitons and breathers, as well as the possibility of chaos. It is widely used in various fields of physics, engineering, and mathematics to study the dynamics of discrete nonlinear systems.
+
+$$
+dc_n = i(c_{n+1} + c_{n-1} -2c_n)dt + i\alpha \left | c_n \right |^2c_ndt
+$$
 
 # Results
-In this simulation, first, I have modeled the discrete nonlinear schrodinger equation using Euler- Mayaruma method. this model has a phase transition for order parameter alpha which has been seen numerically.
+
+
+In the simulation, I have utilized the Euler-Mayaruma method to model the discrete nonlinear Schrödinger equation. This mathematical model showcases a phase transition of the order parameter alpha, which was observed numerically. The plots depicted below illustrate the results of the simulation. When the value of $\alpha$ is less than 4, there is no breather present in the system, however, for values of $\alpha$ greater than 4, a stable breather emerges in the system.
 
 <p float="left">
 <img src="https://github.com/eurusebr/FeedBack/blob/master/HDNLS(3.7).jpg" alt="alt text" width="400">
