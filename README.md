@@ -19,6 +19,10 @@ In the simulation, I have utilized the Euler-Mayaruma method to model the discre
 <img src="https://github.com/eurusebr/FeedBack/blob/master/HDNLS(8).jpg" alt="alt text" width="400">
 </p>
 
+In the plot below you can see the breather amplitude $p_0 = \left | c_n \right |^{2}$ of the breather with $\alpha = 3.7,4,5,8$.
+<p align="center">
+  <img src="https://github.com/eurusebr/FeedBack/blob/master/p0.jpg" width="450" title="hover text">
+</p>
 
 
 
