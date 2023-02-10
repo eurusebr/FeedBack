@@ -25,32 +25,6 @@ In the plot below you can see the breather amplitude $p_0 = \left | c_n \right |
 </p>
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 ## References
 1. M.Hofmann and B.Drossel, "Dephasing versus collapse: lessons from the tight-binding model with noise", New Journal of Physics, Volume 23, October 2021:
 <a href = "https://doi.org/10.1088/1367-2630/ac2ae2"> https://doi.org/10.1088/1367-2630/ac2ae2 </a>
