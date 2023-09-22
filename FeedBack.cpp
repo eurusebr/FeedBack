@@ -27,6 +27,7 @@ void normarray(vector<vector<double>> &a, vector<complex<double>> b, int row, do
 void write(vector<double> &A, string &file);
 vector<complex<double>> Enoughtpart(vector<complex<double>> &a, double alpha, double Enought, double newnorm, double xi, double lambda, double dt, int N);
 complex<double> H(vector<complex<double>> &a, double alpha, int N);
+vector<complex<double>> EnoughtpartDelta(vector<complex<double>> &a, double alpha, double Enought, double newnorm, double xi, double lambda, double dt, int N, double delta, int bond);
 
 int main(int argc, char **argv)
 {
@@ -48,6 +49,8 @@ int main(int argc, char **argv)
     int steps = stod(argv[10]);
     double ens = stod(argv[11]);
     int samples = stod(argv[12]);
+    double delta = stod(argv[13]); 
+    int bond = stod(argv[14]);
 
     auto start = steady_clock::now();
     
@@ -237,7 +240,8 @@ int main(int argc, char **argv)
             //write(subamp, file);
             for (size_t i = 0; i < steps - 1; i++)
             {
-                complexArray = Enoughtpart(complexArray, alpha, energy[0], newnorm, xi, lambda, dt, N);
+                ///complexArray = Enoughtpart(complexArray, alpha, energy[0], newnorm, xi, lambda, dt, N);
+                complexArray = EnoughtpartDelta(complexArray, alpha, energy[0], newnorm, xi, lambda, dt, N, delta, bond);
                 newnorm = c_array_norm(complexArray, N);
                 //normalize(complexArray, N);
                 //energy.push_back(H(complexArray, alpha, N).real());
@@ -250,7 +254,7 @@ int main(int argc, char **argv)
 //                    //pzero.push_back(amplitude[i][int(N / 2)]);
 //
 //                }
-                if (dt*i > 60)
+                if (i % samples == 0)
                 {
                     //std::memcpy(&subamp[0], &amplitude[i][int(N/2) - 20], 40 * sizeof(double));
                     //write(subamp, file);
@@ -277,14 +281,13 @@ int main(int argc, char **argv)
         //}
         //write(subamp, file);
         //write(energy, file1);
-        ave.push_back(accumulate( pzero.begin(), pzero.end(), 0.0)/pzero.size());              
-        write(ave,file2);
+        //ave.push_back(accumulate( pzero.begin(), pzero.end(), 0.0)/pzero.size());              
+        write(pzero,file2);
         
         ofstream myfile("./Damping_alpha(" + string(argv[5]) + ")" + "/xi(" + argv[9] + ")" + "/log.txt",std::ofstream::trunc); 
         for (int l = 0; l < 13; l++)
         {
             myfile << argv[l] << endl;
-
         }
         myfile.close();
     }
@@ -450,6 +453,29 @@ vector<complex<double>> Enoughtpart(vector<complex<double>> &a, double alpha, do
         int R = i == N - 1 ? 0 : i + 1;
         result[i] = (I - xi * (ham - Enought)) * dt * ((-a[R] - a[L] + 2.0 * a[i]) - (alpha * norm(a[i]) * a[i])) - lambda * a[i] * (newnorm - 1) + a[i];
         
+    }
+    return result;
+}
+
+vector<complex<double>> EnoughtpartDelta(vector<complex<double>> &a, double alpha, double Enought, double newnorm, double xi, double lambda, double dt, int N, double delta, int bond)
+{
+    vector<complex<double>> result(N);
+    complex<double> ham = H(a, alpha, N);    
+
+    for (size_t i = 0; i < N; i++)
+    {
+        if(i < bond || i > (N-bond)) 
+        {
+            int L = i == 0 ? N - 1 : i - 1;
+            int R = i == N - 1 ? 0 : i + 1;
+            result[i] = (I - xi * (ham - Enought)) * dt * ((-a[R] - a[L] + 2.0 * a[i]) - (alpha * norm(a[i]) * a[i])) - lambda * a[i] * (newnorm - 1) - (I * delta * a[i]) + a[i];
+        }
+        else
+        {
+            int L = i == 0 ? N - 1 : i - 1;
+            int R = i == N - 1 ? 0 : i + 1;
+            result[i] = (I - xi * (ham - Enought)) * dt * ((-a[R] - a[L] + 2.0 * a[i]) - (alpha * norm(a[i]) * a[i])) - lambda * a[i] * (newnorm - 1) + a[i];
+        }
     }
     return result;
 }
