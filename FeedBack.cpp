@@ -24,7 +24,8 @@ void noise(vector<complex<double>> &a, vector<complex<double>> &b, boost::random
 void normalize(vector<complex<double>> &complexArray, int N);
 void localizedArray(vector<complex<double>> &complexArray);
 void normarray(vector<vector<double>> &a, vector<complex<double>> b, int row, double ens);
-void write(vector<double> &A, string &file);
+//void write(vector<double> &A, string &file);
+void write(const vector<double> &data, const string &file);
 vector<complex<double>> Enoughtpart(vector<complex<double>> &a, double alpha, double Enought, double newnorm, double xi, double lambda, double dt, int N);
 complex<double> H(vector<complex<double>> &a, double alpha, int N);
 vector<complex<double>> EnoughtpartDelta(vector<complex<double>> &a, double alpha, double Enought, double newnorm, double xi, double lambda, double dt, int N, double delta, int bond);
@@ -35,6 +36,11 @@ int main(int argc, char **argv)
 #include <iostream>
 #include <vector>
 #include <sstream>
+
+    if (argc < 14) {
+        cerr << "Usage: " << argv[0] << " <model> <other_arguments>" << endl;
+        return 1;
+    }
 
     string model = argv[1];
     int N = stod(argv[2]);
@@ -55,7 +61,7 @@ int main(int argc, char **argv)
     auto start = steady_clock::now();
     
     string file, file1, file2;
-    vector<vector<double>> amplitude(steps, vector<double>(N, 0));
+    //vector<vector<double>> amplitude(steps, vector<double>(N, 0));
     vector<double> pzero, energy, ave;
     vector<double> subamp(41);
     vector<double> subbamp(N);
@@ -99,8 +105,8 @@ int main(int argc, char **argv)
         localizedArray(complexArray);
         normalize(complexArray, N);
         //energy.push_back(H(complexArray, alpha, N).real());
-        pzero.push_back(amplitude[0][int(N / 2)]);
-        normarray(amplitude, complexArray, 0, ens);
+        //pzero.push_back(amplitude[0][int(N / 2)]);
+        //normarray(amplitude, complexArray, 0, ens);
         //std::memcpy(&subamp[0], &amplitude[0][int(N / 2) - 20], 40 * sizeof(double));
         //write(subamp, file);
 
@@ -109,13 +115,13 @@ int main(int argc, char **argv)
             complexArray = HDNLS(complexArray, alpha, dt, N);
             normalize(complexArray, N);
             
-            normarray(amplitude, complexArray, j+1, ens);
+            //normarray(amplitude, complexArray, j+1, ens);
 //            write(subamp, file);
             if (j % samples == 0)
             {
                 energy.push_back(H(complexArray, alpha, N).real());
-                pzero.push_back(amplitude[j][int(N / 2)]);
-                std::memcpy(&subamp[0], &amplitude[j][int(N / 2) - 20], 40 * sizeof(double));
+                //pzero.push_back(amplitude[j][int(N / 2)]);
+                //std::memcpy(&subamp[0], &amplitude[j][int(N / 2) - 20], 40 * sizeof(double));
                 write(subamp, file);
             }
         }
@@ -156,7 +162,7 @@ int main(int argc, char **argv)
             cout << s << endl;
             localizedArray(complexArray);
             normalize(complexArray, N);
-            normarray(amplitude, complexArray, 0, ens);
+            //normarray(amplitude, complexArray, 0, ens);
             for (size_t i = 0; i < steps - 1; i++)
             {
                 noise(complexArray, AddingArray, rng, m_dist, gamma, beta, dt, N);
@@ -166,7 +172,7 @@ int main(int argc, char **argv)
                     complexArray[j] = complexArray[j] + AddingArray[j];
                 }
                 normalize(complexArray, N);
-                normarray(amplitude, complexArray, i + 1, ens);
+                //normarray(amplitude, complexArray, i + 1, ens);
             }
         }
 
@@ -178,7 +184,7 @@ int main(int argc, char **argv)
             // write(subamp, file);
             if (j % samples == 0)
             {
-                pzero.push_back(amplitude[j][int(N / 2)]);
+                //pzero.push_back(amplitude[j][int(N / 2)]);
             }
         }
         write(pzero, file);
@@ -235,17 +241,17 @@ int main(int argc, char **argv)
             double newnorm = c_array_norm(complexArray, N);
             //normalize(complexArray, N);
             energy.push_back(H(complexArray, alpha, N).real());
-            normarray(amplitude, complexArray, 0, ens);
+            //normarray(amplitude, complexArray, 0, ens);
             //std::memcpy(&subamp[0], &amplitude[0][int(N/2) - 20], 40 * sizeof(double));
             //write(subamp, file);
             for (size_t i = 0; i < steps - 1; i++)
             {
-                ///complexArray = Enoughtpart(complexArray, alpha, energy[0], newnorm, xi, lambda, dt, N);
-                complexArray = EnoughtpartDelta(complexArray, alpha, energy[0], newnorm, xi, lambda, dt, N, delta, bond);
+                complexArray = Enoughtpart(complexArray, alpha, energy[0], newnorm, xi, lambda, dt, N);
+                //complexArray = EnoughtpartDelta(complexArray, alpha, energy[0], newnorm, xi, lambda, dt, N, delta, bond);
                 newnorm = c_array_norm(complexArray, N);
                 //normalize(complexArray, N);
                 //energy.push_back(H(complexArray, alpha, N).real());
-                normarray(amplitude, complexArray, i + 1, ens);
+                //normarray(amplitude, complexArray, i + 1, ens);
 //                if (i % samples == 0)
 //                {
 //                    //std::memcpy(&subamp[0], &amplitude[i][int(N/2) - 20], 40 * sizeof(double));
@@ -259,7 +265,7 @@ int main(int argc, char **argv)
                     //std::memcpy(&subamp[0], &amplitude[i][int(N/2) - 20], 40 * sizeof(double));
                     //write(subamp, file);
                     //write(amplitude[i], file);
-                    pzero.push_back(amplitude[i][int(N / 2)]);
+                    pzero.push_back(norm(complexArray[int(N / 2)]));
 
                 }
 
@@ -324,17 +330,17 @@ int main(int argc, char **argv)
             localizedArray(complexArray);
             double newnorm = c_array_norm(complexArray, N);
             energy.push_back(H(complexArray, myVector[s], N).real());
-            normarray(amplitude, complexArray, 0, ens);
+            //normarray(amplitude, complexArray, 0, ens);
             for (size_t i = 0; i < steps - 1; i++)
             {
                 complexArray = Enoughtpart(complexArray, myVector[s], energy[0], newnorm, xi, lambda, dt, N);
                 newnorm = c_array_norm(complexArray, N);
-                normarray(amplitude, complexArray, i + 1, ens);
+                //normarray(amplitude, complexArray, i + 1, ens);
                 if (i % samples == 0)
                 {
                     //std::memcpy(&subamp[0], &amplitude[i][int(N/2) - 20], 40 * sizeof(double));
                     //write(subamp, file);
-                    pzero.push_back(amplitude[i][int(N / 2)]);
+                    //pzero.push_back(amplitude[i][int(N / 2)]);
                     //write(amplitude[i], file);
                 }
                 //if (i == 4000000)
@@ -355,7 +361,7 @@ int main(int argc, char **argv)
             ave.push_back(accumulate( pzero.begin(), pzero.end(), 0.0)/pzero.size());   
             pzero.clear();
             energy.clear();
-            for(auto& elem : amplitude) std::fill(elem.begin(), elem.end(), 0);        
+            //for(auto& elem : amplitude) std::fill(elem.begin(), elem.end(), 0);        
         }
 
 //        for (size_t i = 0; i < 2; i++)
@@ -445,17 +451,17 @@ vector<complex<double>> HDNLS(vector<complex<double>> &a, double alpha, double d
 vector<complex<double>> Enoughtpart(vector<complex<double>> &a, double alpha, double Enought, double newnorm, double xi, double lambda, double dt, int N)
 {
     vector<complex<double>> result(N);
-    complex<double> ham = H(a, alpha, N);    
 
     for (size_t i = 0; i < N; i++)
     {
         int L = i == 0 ? N - 1 : i - 1;
         int R = i == N - 1 ? 0 : i + 1;
-        result[i] = (I - xi * (ham - Enought)) * dt * ((-a[R] - a[L] + 2.0 * a[i]) - (alpha * norm(a[i]) * a[i])) - lambda * a[i] * (newnorm - 1) + a[i];
+        result[i] = (I - xi * (H(a, alpha, N) - Enought)) * dt * ((-a[R] - a[L] + 2.0 * a[i]) - (alpha * norm(a[i]) * a[i])) - lambda * a[i] * (newnorm - 1) + a[i];
         
     }
     return result;
 }
+
 
 vector<complex<double>> EnoughtpartDelta(vector<complex<double>> &a, double alpha, double Enought, double newnorm, double xi, double lambda, double dt, int N, double delta, int bond)
 {
@@ -464,11 +470,11 @@ vector<complex<double>> EnoughtpartDelta(vector<complex<double>> &a, double alph
 
     for (size_t i = 0; i < N; i++)
     {
-        if(i < bond || i > (N-bond)) 
+        if(i < bond || i > (N-bond+1)) 
         {
             int L = i == 0 ? N - 1 : i - 1;
             int R = i == N - 1 ? 0 : i + 1;
-            result[i] = (I - xi * (ham - Enought)) * dt * ((-a[R] - a[L] + 2.0 * a[i]) - (alpha * norm(a[i]) * a[i])) - lambda * a[i] * (newnorm - 1) - (I * delta * a[i]) + a[i];
+            result[i] = (I - xi * (ham - Enought)) * dt * ((-a[R] - a[L] + 2.0 * a[i]) - (alpha * norm(a[i]) * a[i])) - lambda * a[i] * (newnorm - 1) - (delta * a[i]) + a[i];
         }
         else
         {
@@ -531,9 +537,18 @@ void normarray(vector<vector<double>> &a, vector<complex<double>> b, int row, do
     }
 }
 
-void write(vector<double> &A, string &file)
-{
-    std::ofstream outFile(file, std::ios::binary | std::ios::app);
-    outFile.write((char *)A.data(), A.size() * sizeof(double));
+//void write(vector<double> &A, string &file)
+//{
+//    std::ofstream outFile(file, std::ios::binary | std::ios::app);
+//    outFile.write((char *)A.data(), A.size() * sizeof(double));
+//    outFile.close();
+//}
+
+
+void write(const vector<double> &data, const string &file) {
+    ofstream outFile(file, ios::binary | ios::trunc);
+    for (double value : data) {
+        outFile.write(reinterpret_cast<const char*>(&value), sizeof(double));
+    }
     outFile.close();
 }
