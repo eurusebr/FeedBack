@@ -26,9 +26,10 @@ void localizedArray(vector<complex<double>> &complexArray);
 void normarray(vector<vector<double>> &a, vector<complex<double>> b, int row, double ens);
 //void write(vector<double> &A, string &file);
 void write(const vector<double> &data, const string &file);
+void writeline(const vector<double> &data, const string &file);
 vector<complex<double>> Enoughtpart(vector<complex<double>> &a, double alpha, double Enought, double newnorm, double xi, double lambda, double dt, int N);
 complex<double> H(vector<complex<double>> &a, double alpha, int N);
-vector<complex<double>> EnoughtpartDelta(vector<complex<double>> &a, double alpha, double Enought, double newnorm, double xi, double lambda, double dt, int N, double delta, int bond);
+vector<complex<double>> EnoughtpartDelta(vector<complex<double>> &a, double alpha, double Enought, double newnorm, double xi, double lambda, double dt, int N, double delta, int bond, int place, int steps);
 
 int main(int argc, char **argv)
 {
@@ -236,6 +237,7 @@ int main(int argc, char **argv)
 
         for (size_t s = 0; s < ens; s++)
         {
+            int k = 0;
             cout << s << endl;
             localizedArray(complexArray);
             double newnorm = c_array_norm(complexArray, N);
@@ -246,11 +248,11 @@ int main(int argc, char **argv)
             //write(subamp, file);
             for (size_t i = 0; i < steps - 1; i++)
             {
-                complexArray = Enoughtpart(complexArray, alpha, energy[0], newnorm, xi, lambda, dt, N);
-                //complexArray = EnoughtpartDelta(complexArray, alpha, energy[0], newnorm, xi, lambda, dt, N, delta, bond);
+                //complexArray = Enoughtpart(complexArray, alpha, energy[0], newnorm, xi, lambda, dt, N);
+                complexArray = EnoughtpartDelta(complexArray, alpha, energy[0], newnorm, xi, lambda, dt, N, delta, bond, i, samples);
                 newnorm = c_array_norm(complexArray, N);
                 //normalize(complexArray, N);
-                //energy.push_back(H(complexArray, alpha, N).real());
+                energy.push_back(H(complexArray, alpha, N).real());
                 //normarray(amplitude, complexArray, i + 1, ens);
 //                if (i % samples == 0)
 //                {
@@ -262,9 +264,21 @@ int main(int argc, char **argv)
 //                }
                 if (i % samples == 0)
                 {
+                    k++;
+                    if (k % 1000 == 0)
+                    {
+                        cout<<k<<endl;
+                        //std::memcpy(&subamp[0], &amplitude[i][int(N/2) - 20], 40 * sizeof(double));
+                        //write(amplitude[i], file);
+                    }
                     //std::memcpy(&subamp[0], &amplitude[i][int(N/2) - 20], 40 * sizeof(double));
                     //write(subamp, file);
                     //write(amplitude[i], file);
+                    for (int k = 0; k < N; k++)
+                    {
+                        subbamp[k] = norm(complexArray[k]);
+                    }
+                    writeline(subbamp, file);
                     pzero.push_back(norm(complexArray[int(N / 2)]));
 
                 }
@@ -286,7 +300,7 @@ int main(int argc, char **argv)
             //}
         //}
         //write(subamp, file);
-        //write(energy, file1);
+        writeline(energy, file1);
         //ave.push_back(accumulate( pzero.begin(), pzero.end(), 0.0)/pzero.size());              
         write(pzero,file2);
         
@@ -463,26 +477,37 @@ vector<complex<double>> Enoughtpart(vector<complex<double>> &a, double alpha, do
 }
 
 
-vector<complex<double>> EnoughtpartDelta(vector<complex<double>> &a, double alpha, double Enought, double newnorm, double xi, double lambda, double dt, int N, double delta, int bond)
+vector<complex<double>> EnoughtpartDelta(vector<complex<double>> &a, double alpha, double Enought, double newnorm, double xi, double lambda, double dt, int N, double delta, int bond, int place, int steps)
 {
     vector<complex<double>> result(N);
-    complex<double> ham = H(a, alpha, N);    
+    complex<double> ham = H(a, alpha, N);
+    double common_term = -lambda * (newnorm - 1);
 
     for (size_t i = 0; i < N; i++)
     {
-        if(i < bond || i > (N-bond+1)) 
+        int L = (i + N - 1) % N;
+        int R = (i + 1) % N;
+
+        if (place > 0.75*steps)
         {
-            int L = i == 0 ? N - 1 : i - 1;
-            int R = i == N - 1 ? 0 : i + 1;
-            result[i] = (I - xi * (ham - Enought)) * dt * ((-a[R] - a[L] + 2.0 * a[i]) - (alpha * norm(a[i]) * a[i])) - lambda * a[i] * (newnorm - 1) - (delta * a[i]) + a[i];
+            if (i < bond || i > (N - bond + 1))
+            {
+            
+                {
+                    result[i] = (I - xi * (ham - Enought)) * dt * ((-a[R] - a[L] + 2.0 * a[i]) - (alpha * norm(a[i]) * a[i])) - delta * a[i] + a[i] + common_term * a[i];
+                }
+            }
+            else
+            {
+                result[i] = (I - xi * (ham - Enought)) * dt * ((-a[R] - a[L] + 2.0 * a[i]) - (alpha * norm(a[i]) * a[i])) + a[i] + common_term * a[i];
+            }
         }
         else
         {
-            int L = i == 0 ? N - 1 : i - 1;
-            int R = i == N - 1 ? 0 : i + 1;
-            result[i] = (I - xi * (ham - Enought)) * dt * ((-a[R] - a[L] + 2.0 * a[i]) - (alpha * norm(a[i]) * a[i])) - lambda * a[i] * (newnorm - 1) + a[i];
+            result[i] = (I - xi * (ham - Enought)) * dt * ((-a[R] - a[L] + 2.0 * a[i]) - (alpha * norm(a[i]) * a[i])) + a[i] + common_term * a[i];
         }
     }
+
     return result;
 }
 
@@ -547,6 +572,14 @@ void normarray(vector<vector<double>> &a, vector<complex<double>> b, int row, do
 
 void write(const vector<double> &data, const string &file) {
     ofstream outFile(file, ios::binary | ios::trunc);
+    for (double value : data) {
+        outFile.write(reinterpret_cast<const char*>(&value), sizeof(double));
+    }
+    outFile.close();
+}
+
+void writeline(const vector<double> &data, const string &file) {
+    ofstream outFile(file, ios::binary | ios::app); // Use "ios::app" to append to the file
     for (double value : data) {
         outFile.write(reinterpret_cast<const char*>(&value), sizeof(double));
     }
