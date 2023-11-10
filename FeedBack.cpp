@@ -29,7 +29,10 @@ void write(const vector<double> &data, const string &file);
 void writeline(const vector<double> &data, const string &file);
 vector<complex<double>> Enoughtpart(vector<complex<double>> &a, double alpha, double Enought, double newnorm, double xi, double lambda, double dt, int N);
 complex<double> H(vector<complex<double>> &a, double alpha, int N);
-vector<complex<double>> EnoughtpartDelta(vector<complex<double>> &a, double alpha, double Enought, double newnorm, double xi, double lambda, double dt, int N, double delta, int bond, int place, int steps);
+vector<complex<double>> EnoughtpartDelta(vector<complex<double>> &a, double alpha, double Enought, double newnorm, double xi, double lambda, double dt, int N, double delta, int bond, int place);
+void writecomp(const std::string& file_path, vector<complex<double>>& complex_vector);
+void readvec(const std::string& file_path, std::vector<std::complex<double>>& complex_values);
+
 
 int main(int argc, char **argv)
 {
@@ -61,15 +64,17 @@ int main(int argc, char **argv)
 
     auto start = steady_clock::now();
     
-    string file, file1, file2;
+    string file, file1, file2, file3, file4;
     //vector<vector<double>> amplitude(steps, vector<double>(N, 0));
     vector<double> pzero, energy, ave;
     vector<double> subamp(41);
     vector<double> subbamp(N);
+    vector<double> newnorm;
+    vector<double> amp;
 
     boost::random::mt19937 rng;
     boost::normal_distribution<> m_dist(0.0, sqrt(0.5 * dt));
-    vector<complex<double>> complexArray(N);
+    vector<complex<double>> complexArray;
     vector<complex<double>> noiseArray(N);
     vector<complex<double>> AddingArray(N);
 
@@ -209,6 +214,8 @@ int main(int argc, char **argv)
             file = secfolder + "/lambda(" + argv[8] + ").bin";
             file1 = secfolder + "/energy.bin";
             file2 = secfolder + "/pzero.bin";
+            file3 = secfolder + "/norm.bin";
+            file4 = secfolder + "/startvec.bin";
         }
         else if (info.st_mode & S_IFDIR)
         {
@@ -219,18 +226,24 @@ int main(int argc, char **argv)
                 file = secfolder + "/lambda(" + argv[8] + ").bin";
                 file1 = secfolder + "/energy.bin";
                 file2 = secfolder + "/pzero.bin";
+                file3 = secfolder + "/norm.bin";
+                file4 = secfolder + "/startvec.bin";
                 ofstream outFile(file, ios::binary | ios::trunc);
                 ofstream outFile1(file1, ios::binary | ios::trunc);
                 ofstream outFile2(file2, ios::binary | ios::trunc);
+                ofstream outFile3(file3, ios::binary | ios::trunc);
             }
             else
             {
                 file = secfolder + "/lambda(" + argv[8] + ").bin";
                 file1 = secfolder + "/energy.bin";
                 file2 = secfolder + "/pzero.bin";
+                file3 = secfolder + "/norm.bin";
+                file4 = secfolder + "/startvec.bin";
                 ofstream outFile(file, ios::binary | ios::trunc);
                 ofstream outFile1(file1, ios::binary | ios::trunc);
                 ofstream outFile2(file2, ios::binary | ios::trunc);
+                ofstream outFile3(file3, ios::binary | ios::trunc);
             }
         }
 
@@ -239,8 +252,10 @@ int main(int argc, char **argv)
         {
             int k = 0;
             cout << s << endl;
-            localizedArray(complexArray);
-            double newnorm = c_array_norm(complexArray, N);
+            //localizedArray(complexArray);
+            readvec(file4, complexArray);
+            newnorm.push_back(complexArray[int(N / 2)].real());
+            cout << newnorm[0] << endl;
             //normalize(complexArray, N);
             energy.push_back(H(complexArray, alpha, N).real());
             //normarray(amplitude, complexArray, 0, ens);
@@ -249,8 +264,8 @@ int main(int argc, char **argv)
             for (size_t i = 0; i < steps - 1; i++)
             {
                 //complexArray = Enoughtpart(complexArray, alpha, energy[0], newnorm, xi, lambda, dt, N);
-                complexArray = EnoughtpartDelta(complexArray, alpha, energy[0], newnorm, xi, lambda, dt, N, delta, bond, i, samples);
-                newnorm = c_array_norm(complexArray, N);
+                complexArray = EnoughtpartDelta(complexArray, alpha, energy[0], newnorm[i], xi, lambda, dt, N, delta, bond, i);
+                newnorm.push_back(c_array_norm(complexArray, N));
                 //normalize(complexArray, N);
                 energy.push_back(H(complexArray, alpha, N).real());
                 //normarray(amplitude, complexArray, i + 1, ens);
@@ -265,20 +280,22 @@ int main(int argc, char **argv)
                 if (i % samples == 0)
                 {
                     k++;
-                    if (k % 1000 == 0)
+                    
+/*                     if (k == 10000)
                     {
                         cout<<k<<endl;
                         //std::memcpy(&subamp[0], &amplitude[i][int(N/2) - 20], 40 * sizeof(double));
                         //write(amplitude[i], file);
-                    }
+                        for (int l = 0; l < N; l++)
+                        {
+                            amp.push_back(norm(complexArray[l]));
+                        } 
+                        write(amp, file4);
+                    } */
                     //std::memcpy(&subamp[0], &amplitude[i][int(N/2) - 20], 40 * sizeof(double));
                     //write(subamp, file);
                     //write(amplitude[i], file);
-                    for (int k = 0; k < N; k++)
-                    {
-                        subbamp[k] = norm(complexArray[k]);
-                    }
-                    writeline(subbamp, file);
+
                     pzero.push_back(norm(complexArray[int(N / 2)]));
 
                 }
@@ -301,6 +318,7 @@ int main(int argc, char **argv)
         //}
         //write(subamp, file);
         writeline(energy, file1);
+        write(newnorm, file3);
         //ave.push_back(accumulate( pzero.begin(), pzero.end(), 0.0)/pzero.size());              
         write(pzero,file2);
         
@@ -477,7 +495,7 @@ vector<complex<double>> Enoughtpart(vector<complex<double>> &a, double alpha, do
 }
 
 
-vector<complex<double>> EnoughtpartDelta(vector<complex<double>> &a, double alpha, double Enought, double newnorm, double xi, double lambda, double dt, int N, double delta, int bond, int place, int steps)
+vector<complex<double>> EnoughtpartDelta(vector<complex<double>> &a, double alpha, double Enought, double newnorm, double xi, double lambda, double dt, int N, double delta, int bond, int place)
 {
     vector<complex<double>> result(N);
     complex<double> ham = H(a, alpha, N);
@@ -488,24 +506,17 @@ vector<complex<double>> EnoughtpartDelta(vector<complex<double>> &a, double alph
         int L = (i + N - 1) % N;
         int R = (i + 1) % N;
 
-        if (place > 0.75*steps)
+        if (i < bond || i > (N - bond + 1))
         {
-            if (i < bond || i > (N - bond + 1))
-            {
+        
+            result[i] = (I - xi * (ham - Enought)) * dt * ((-a[R] - a[L] + 2.0 * a[i]) - (alpha * norm(a[i]) * a[i])) - delta * a[i] + a[i] + common_term * a[i];
             
-                {
-                    result[i] = (I - xi * (ham - Enought)) * dt * ((-a[R] - a[L] + 2.0 * a[i]) - (alpha * norm(a[i]) * a[i])) - delta * a[i] + a[i] + common_term * a[i];
-                }
-            }
-            else
-            {
-                result[i] = (I - xi * (ham - Enought)) * dt * ((-a[R] - a[L] + 2.0 * a[i]) - (alpha * norm(a[i]) * a[i])) + a[i] + common_term * a[i];
-            }
         }
         else
         {
             result[i] = (I - xi * (ham - Enought)) * dt * ((-a[R] - a[L] + 2.0 * a[i]) - (alpha * norm(a[i]) * a[i])) + a[i] + common_term * a[i];
         }
+
     }
 
     return result;
@@ -584,4 +595,36 @@ void writeline(const vector<double> &data, const string &file) {
         outFile.write(reinterpret_cast<const char*>(&value), sizeof(double));
     }
     outFile.close();
+}
+
+void writecomp(const std::string& file_path, vector<complex<double>>& complex_vector) {
+    std::ofstream fille(file_path, std::ios::binary);
+
+    if (!fille) {
+        std::cerr << "Error opening file: " << file_path << std::endl;
+        return;
+    }
+
+    // Write each complex value to the binary file
+    for (const auto& complex_value : complex_vector) {
+        fille.write(reinterpret_cast<const char*>(&complex_value), sizeof(std::complex<double>));
+    }
+}
+
+void readvec(const std::string& file_path, std::vector<std::complex<double>>& complex_values) {
+    std::ifstream file(file_path, std::ios::binary);
+
+    if (!file) {
+        std::cerr << "Error opening file: " << file_path << std::endl;
+        return;
+    }
+
+    double value;
+
+    // Read binary data until the end of the file
+    while (file.read(reinterpret_cast<char*>(&value), sizeof(double))) {
+        // Create a complex number with a real part from the double value and an imaginary part of 0
+        complex_values.push_back(complex<double>(value, 0.0));
+    }
+    cout<<complex_values[500]<<endl;
 }
