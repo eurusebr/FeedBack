@@ -74,7 +74,7 @@ int main(int argc, char **argv)
 
     boost::random::mt19937 rng;
     boost::normal_distribution<> m_dist(0.0, sqrt(0.5 * dt));
-    vector<complex<double>> complexArray;
+    vector<complex<double>> complexArray(N);
     vector<complex<double>> noiseArray(N);
     vector<complex<double>> AddingArray(N);
 
@@ -280,10 +280,14 @@ int main(int argc, char **argv)
                 if (i % samples == 0)
                 {
                     k++;
-                    
-/*                     if (k == 10000)
+                    if (k% 1000 == 0)
                     {
                         cout<<k<<endl;
+                    }
+                    
+/*                      if (k == 10000)
+                    {
+                        cout<<"Hi"<<endl;
                         //std::memcpy(&subamp[0], &amplitude[i][int(N/2) - 20], 40 * sizeof(double));
                         //write(amplitude[i], file);
                         for (int l = 0; l < N; l++)
@@ -291,7 +295,7 @@ int main(int argc, char **argv)
                             amp.push_back(norm(complexArray[l]));
                         } 
                         write(amp, file4);
-                    } */
+                    }  */
                     //std::memcpy(&subamp[0], &amplitude[i][int(N/2) - 20], 40 * sizeof(double));
                     //write(subamp, file);
                     //write(amplitude[i], file);
@@ -319,7 +323,8 @@ int main(int argc, char **argv)
         //write(subamp, file);
         writeline(energy, file1);
         write(newnorm, file3);
-        //ave.push_back(accumulate( pzero.begin(), pzero.end(), 0.0)/pzero.size());              
+        //ave.push_back(accumulate( pzero.begin(), pzero.end(), 0.0)/pzero.size());  
+        cout<<pzero[0]<<endl;            
         write(pzero,file2);
         
         ofstream myfile("./Damping_alpha(" + string(argv[5]) + ")" + "/xi(" + argv[9] + ")" + "/log.txt",std::ofstream::trunc); 
@@ -619,12 +624,11 @@ void readvec(const std::string& file_path, std::vector<std::complex<double>>& co
         return;
     }
 
-    double value;
+    double real_part;
 
-    // Read binary data until the end of the file
-    while (file.read(reinterpret_cast<char*>(&value), sizeof(double))) {
-        // Create a complex number with a real part from the double value and an imaginary part of 0
-        complex_values.push_back(complex<double>(value, 0.0));
+    // Read binary data until the end of the file or the end of the vector
+    for (int i = 0; i < complex_values.size() && file.read(reinterpret_cast<char*>(&real_part), sizeof(double)); ++i) {
+        complex_values[i] = std::complex<double>(real_part, 0.0);
     }
     cout<<complex_values[500]<<endl;
 }
