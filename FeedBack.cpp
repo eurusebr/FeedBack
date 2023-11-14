@@ -31,8 +31,8 @@ vector<complex<double>> Enoughtpart(vector<complex<double>> &a, double alpha, do
 complex<double> H(vector<complex<double>> &a, double alpha, int N);
 vector<complex<double>> EnoughtpartDelta(vector<complex<double>> &a, double alpha, double Enought, double newnorm, double xi, double lambda, double dt, int N, double delta, int bond, int place);
 void writecomp(const std::string& file_path, vector<complex<double>>& complex_vector);
-void readvec(const std::string& file_path, std::vector<std::complex<double>>& complex_values);
-
+void readvec(const std::string& filePath, vector<complex<double>>& complexVector, size_t N);
+void NormalizedGaussian(std::vector<std::complex<double>>& result, double peak, double standardDeviation);
 
 int main(int argc, char **argv)
 {
@@ -252,10 +252,11 @@ int main(int argc, char **argv)
         {
             int k = 0;
             cout << s << endl;
-            //localizedArray(complexArray);
-            readvec(file4, complexArray);
-            newnorm.push_back(complexArray[int(N / 2)].real());
-            cout << newnorm[0] << endl;
+            localizedArray(complexArray);
+            //readvec(file4, complexArray, N);
+            //NormalizedGaussian(complexArray, 0.828665, 0.8);
+            newnorm.push_back(c_array_norm(complexArray, N));
+            cout << c_array_norm(complexArray, N) << endl;
             //normalize(complexArray, N);
             energy.push_back(H(complexArray, alpha, N).real());
             //normarray(amplitude, complexArray, 0, ens);
@@ -285,17 +286,19 @@ int main(int argc, char **argv)
                         cout<<k<<endl;
                     }
                     
-/*                      if (k == 10000)
+                    if (k == 10000)
                     {
                         cout<<"Hi"<<endl;
                         //std::memcpy(&subamp[0], &amplitude[i][int(N/2) - 20], 40 * sizeof(double));
                         //write(amplitude[i], file);
-                        for (int l = 0; l < N; l++)
+/*                         for (int l = 0; l < N; l++)
                         {
                             amp.push_back(norm(complexArray[l]));
-                        } 
-                        write(amp, file4);
-                    }  */
+                        }  */
+                        //write(amp, file4);
+                        writecomp(file4, complexArray);
+                        //cout<<energy[i]<<endl;
+                    } 
                     //std::memcpy(&subamp[0], &amplitude[i][int(N/2) - 20], 40 * sizeof(double));
                     //write(subamp, file);
                     //write(amplitude[i], file);
@@ -616,19 +619,62 @@ void writecomp(const std::string& file_path, vector<complex<double>>& complex_ve
     }
 }
 
-void readvec(const std::string& file_path, std::vector<std::complex<double>>& complex_values) {
-    std::ifstream file(file_path, std::ios::binary);
+void readvec(const std::string& filePath, vector<complex<double>>& complexVector, size_t N) {
+    // Open the binary file for reading in binary mode
+    ifstream file(filePath, ios::binary);
 
-    if (!file) {
-        std::cerr << "Error opening file: " << file_path << std::endl;
+    // Check if the file is opened successfully
+    if (!file.is_open()) {
+        cerr << "Error: Unable to open file." << endl;
         return;
     }
 
-    double real_part;
+    // Read the complex values from the file and fill the vector
+    for (size_t i = 0; i < N; ++i) {
+        double realPart, imagPart;
 
-    // Read binary data until the end of the file or the end of the vector
-    for (int i = 0; i < complex_values.size() && file.read(reinterpret_cast<char*>(&real_part), sizeof(double)); ++i) {
-        complex_values[i] = std::complex<double>(real_part, 0.0);
+        // Read the real and imaginary parts from the file
+        if (!file.read(reinterpret_cast<char*>(&realPart), sizeof(double))) {
+            cerr << "Error reading real part from file." << endl;
+            break;
+        }
+
+        if (!file.read(reinterpret_cast<char*>(&imagPart), sizeof(double))) {
+            cerr << "Error reading imaginary part from file." << endl;
+            break;
+        }
+
+        // Create a complex number and add it to the vector
+        complex<double> complexValue(realPart, imagPart);
+        //complexVector.push_back(complexValue);
+        complexVector[i] = complexValue;
     }
-    cout<<complex_values[500]<<endl;
+
+    // Close the file
+    file.close();
+}
+
+
+void NormalizedGaussian(std::vector<std::complex<double>>& result, double peak, double standardDeviation) {
+    int size = result.size();
+    double sum = 0.0;
+
+    if (size % 2 == 0) {
+        std::cerr << "Size should be odd for a centered peak." << std::endl;
+        return;
+    }
+
+    int middle = size / 2;
+
+    for (int i = 0; i < size; ++i) {
+        int x = i - middle;
+        double realPart = peak * exp(-0.5 * (x * x) / (standardDeviation * standardDeviation));
+        result[i] = std::complex<double>(realPart, 0.0);
+        sum += norm(result[i]);
+    }
+
+    // Normalize the real part of the array to ensure that the sum of values is equal to 1.
+    for (int i = 0; i < size; ++i) {
+        result[i] /= sqrt(sum);
+    }
 }
