@@ -69,7 +69,7 @@ int main(int argc, char **argv)
     string file, file1, file2, file3, file4, file5;
     //vector<vector<double>> amplitude(steps, vector<double>(N, 0));
     vector<double> pzero, energy, ave;
-    vector<double> subamp(41);
+    vector<double> subamp;
     vector<double> subbamp(N);
     vector<double> newnorm;
     vector<double> amp;
@@ -128,7 +128,7 @@ int main(int argc, char **argv)
         //localizedArray(complexArray);
         //normalize(complexArray, N);
         complexArray = readComplexVector(file4);
-        cout << H(complexArray, alpha, N).real() << endl;
+        std::cout << H(complexArray, alpha, N).real() << endl;
         newnorm.push_back(c_array_norm(complexArray, N));
         energy.push_back(H(complexArray, alpha, N).real());
         pzero.push_back(norm(complexArray[int(N / 2)]));
@@ -150,7 +150,7 @@ int main(int argc, char **argv)
                 k++;
                 if (k% 1000 == 0)
                 {
-                    cout<<k<<endl;
+                    std::cout<<k<<endl;
                 }
                 energy.push_back(H(complexArray, alpha, N).real());
                 pzero.push_back(norm(complexArray[int(N / 2)]));
@@ -158,6 +158,112 @@ int main(int argc, char **argv)
                 //pzero.push_back(amplitude[j][int(N / 2)]);
                 //std::memcpy(&subamp[0], &amplitude[j][int(N / 2) - 20], 40 * sizeof(double));
                 //write(subamp, file);
+            }
+        }
+        writeline(energy, file1);
+        writeline(newnorm, file3);
+        writeline(pzero,file2);
+        //write(energy, file1);
+
+    }
+
+    if (model == "ConDNLS")
+    {
+        // Create a new directory
+        string folder = "./ConDNLS(" + string(argv[5]) + ")";
+        struct stat info;
+        if (stat(folder.c_str(), &info) != 0)
+        {
+            mkdir(folder.c_str(), S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH);
+            string secfolder = folder + "/xi(" + argv[9] + ")";
+            mkdir(secfolder.c_str(), S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH);
+            file = secfolder + "/lambda(" + argv[8] + ").bin";
+            file1 = secfolder + "/energy.bin";
+            file2 = secfolder + "/pzero.bin";
+            file3 = secfolder + "/norm.bin";
+            file4 = secfolder + "/startvec.bin";
+        }
+        else if (info.st_mode & S_IFDIR)
+        {
+            string secfolder = folder + "/xi(" + argv[9] + ")";
+            if (stat(secfolder.c_str(), &info) != 0)
+            {
+                mkdir(secfolder.c_str(), S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH);
+                file = secfolder + "/lambda(" + argv[8] + ").bin";
+                file1 = secfolder + "/energy.bin";
+                file2 = secfolder + "/pzero.bin";
+                file3 = secfolder + "/norm.bin";
+                file4 = secfolder + "/startvec.bin";
+                ofstream outFile(file, ios::binary | ios::trunc);
+                ofstream outFile1(file1, ios::binary | ios::trunc);
+                ofstream outFile2(file2, ios::binary | ios::trunc);
+                ofstream outFile3(file3, ios::binary | ios::trunc);
+            }
+            else
+            {
+                file = secfolder + "/lambda(" + argv[8] + ").bin";
+                file1 = secfolder + "/energy.bin";
+                file2 = secfolder + "/pzero.bin";
+                file3 = secfolder + "/norm.bin";
+                file4 = secfolder + "/startvec.bin";
+                ofstream outFile(file, ios::binary | ios::trunc);
+                ofstream outFile1(file1, ios::binary | ios::trunc);
+                ofstream outFile2(file2, ios::binary | ios::trunc);
+                ofstream outFile3(file3, ios::binary | ios::trunc);
+            }
+        }
+        ofstream myfile("./ConDNLS(" + string(argv[5]) + ")/xi(" + string(argv[9]) + ")" + "/log.txt",std::ofstream::trunc); 
+        for (int l = 0; l < 15; l++)
+        {
+            myfile << argv[l] << endl;
+        }
+        myfile.close();
+        // GaussianArray(complexArray, 0.0, sigma);
+        localizedArray(complexArray);
+        normalize(complexArray, N);
+        //complexArray = readComplexVector(file4);
+        std::cout << "Energy = " << H(complexArray, alpha, N).real() << endl;
+        newnorm.push_back(c_array_norm(complexArray, N));
+        double normm = newnorm[0];
+        energy.push_back(H(complexArray, alpha, N).real());
+        pzero.push_back(norm(complexArray[int(N / 2)]));
+        //energy.push_back(H(complexArray, alpha, N).real());
+        //pzero.push_back(amplitude[0][int(N / 2)]);
+        //normarray(amplitude, complexArray, 0, ens);
+        for (int i = 480; i <= 520; ++i) 
+        {
+            subamp.push_back(std::abs(complexArray[i]));
+        }
+        subamp.clear();
+        //std::memcpy(&subamp[0], &amplitude[0][int(N / 2) - 20], 40 * sizeof(double));
+        //write(subamp, file);
+        int k = 0;
+        for (size_t j = 0; j < steps-1; j++)
+        {
+            //std::cout << j << endl;
+            complexArray = Enoughtpart(complexArray, alpha, energy[0], normm, xi, lambda, dt, N);
+            normm = c_array_norm(complexArray, N);
+            //normalize(complexArray, N);
+            //normarray(amplitude, complexArray, j+1, ens);
+//            write(subamp, file);
+            if (j % samples == 0)
+            {   
+                //std::cout << k <<endl;
+                k++;
+                if (k% 100 == 0)
+                {
+                    std::cout<<k<<endl;
+                }
+                energy.push_back(H(complexArray, alpha, N).real());
+                pzero.push_back(norm(complexArray[int(N / 2)]));
+                newnorm.push_back(normm);
+                //pzero.push_back(amplitude[j][int(N / 2)]);
+                for (int i = 480; i <= 520; ++i) 
+                {
+                    subamp.push_back(std::abs(complexArray[i]));
+                }
+                writeline(subamp, file);
+                subamp.clear();
             }
         }
         writeline(energy, file1);
@@ -197,7 +303,7 @@ int main(int argc, char **argv)
 
         for (size_t s = 0; s < ens; s++)
         {
-            cout << s << endl;
+            std::cout << s << endl;
             localizedArray(complexArray);
             normalize(complexArray, N);
             //normarray(amplitude, complexArray, 0, ens);
@@ -214,7 +320,7 @@ int main(int argc, char **argv)
             }
         }
 
-        cout << steps << endl;
+        std::cout << steps << endl;
         for (int j = 0; j < steps; j++)
         {
             // std::memcpy(&subamp[0], &amplitude[j][int(N/2) - 20], 40 * sizeof(double));
@@ -283,7 +389,7 @@ int main(int argc, char **argv)
         for (size_t s = 0; s < ens; s++)
         {
             int k = 0;
-            cout << s << endl;
+            std::cout << s << endl;
             localizedArray(complexArray);
             //readvec(file4, complexArray, N);
             //NormalizedGaussian(complexArray, 0.828665, 0.8);
@@ -316,12 +422,12 @@ int main(int argc, char **argv)
                     k++;
                     if (k% 100 == 0)
                     {
-                        cout<<k<<endl;
+                        std::cout<<k<<endl;
                     }
                     
                     if (k == 2400)
                     {
-                        cout<<"Hi"<<endl;
+                        std::cout<<"Hi"<<endl;
                         //std::memcpy(&subamp[0], &amplitude[i][int(N/2) - 20], 40 * sizeof(double));
                         //write(amplitude[i], file);
 /*                         for (int l = 0; l < N; l++)
@@ -362,7 +468,7 @@ int main(int argc, char **argv)
         writeline(energy, file1);
         write(newnorm, file3);
         //ave.push_back(accumulate( pzero.begin(), pzero.end(), 0.0)/pzero.size());  
-        cout<<pzero[0]<<endl;            
+        std::cout<<pzero[0]<<endl;            
         write(pzero,file2);
         
         ofstream myfile("./Damping_alpha(" + string(argv[5]) + ")" + "/xi(" + argv[9] + ")" + "/log.txt",std::ofstream::trunc); 
@@ -438,7 +544,7 @@ int main(int argc, char **argv)
 
         for (double g = start; g > end; g -= period)
         {
-            cout<<g<<endl;
+            std::cout<<g<<endl;
             for (size_t s = 0; s < ens; s++)
             {
                 int k = 0;
@@ -471,7 +577,7 @@ int main(int argc, char **argv)
                             
                             if (k == 2400)
                             {
-                                cout<<"h1"<<endl;
+                                std::cout<<"h1"<<endl;
                                 saveComplexVector(file5, complexArray);
                             }
                             pzero.push_back(norm(complexArray[int(N / 2)]));
@@ -483,7 +589,7 @@ int main(int argc, char **argv)
             }
             if (std::abs(g - 7.99) < tolerance || std::abs(g - 7) < tolerance || std::abs(g - 6) < tolerance || std::abs(g - 5) < tolerance || std::abs(g - 4) < tolerance)
             {
-                cout<<"h2"<<endl;
+                std::cout<<"h2"<<endl;
                 writeline(energy, file1);
                 writeline(newnorm, file3);
                 writeline(pzero,file2);
@@ -568,14 +674,19 @@ vector<complex<double>> HDNLS(vector<complex<double>> &a, double alpha, double d
 vector<complex<double>> Enoughtpart(vector<complex<double>> &a, double alpha, double Enought, double newnorm, double xi, double lambda, double dt, int N)
 {
     vector<complex<double>> result(N);
+    complex<double> ham = H(a, alpha, N);
+    double common_term = -lambda * (newnorm - 1);
 
     for (size_t i = 0; i < N; i++)
     {
-        int L = i == 0 ? N - 1 : i - 1;
-        int R = i == N - 1 ? 0 : i + 1;
-        result[i] = (I - xi * (H(a, alpha, N) - Enought)) * dt * ((-a[R] - a[L] + 2.0 * a[i]) - (alpha * norm(a[i]) * a[i])) - lambda * a[i] * (newnorm - 1) + a[i];
+        int L = (i + N - 1) % N;
+        int R = (i + 1) % N;
+
+        result[i] = (I - xi * (ham - Enought)) * dt * ((-a[R] - a[L] + 2.0 * a[i]) - (alpha * norm(a[i]) * a[i])) + a[i] + common_term * a[i];
         
+
     }
+
     return result;
 }
 
