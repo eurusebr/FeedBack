@@ -58,27 +58,26 @@ int main(int argc, char **argv)
     vector<complex<double>> complexArray(N);
     vector<complex<double>> midcompvec;
 
-
-    // Create a new directory
-    string folder = "./Recursive(" + string(argv[5]) + ")";
+// Create a new directory
+    string folder = "./Omega";
     struct stat info;
     if (stat(folder.c_str(), &info) != 0)
     {
         mkdir(folder.c_str(), S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH);
-        string secfolder = folder + "/xi(" + argv[9] + ")";
+        string secfolder = folder + "/alpha(" + argv[5] + ")";
         mkdir(secfolder.c_str(), S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH);
         file = secfolder + "/alphavec.txt";
         file1 = secfolder + "/energy.bin";
         file2 = secfolder + "/pzero.bin";
         file3 = secfolder + "/norm.bin";
-        file4 = secfolder + "/startvec.bin";
+        file4 = secfolder + "/startvec.txt";
         file5 = secfolder + "/pone.bin";
         file6 = secfolder + "/pminusone.bin";
         file7 = secfolder + "/compmid.bin";
     }
     else if (info.st_mode & S_IFDIR)
     {
-        string secfolder = folder + "/xi(" + argv[9] + ")";
+        string secfolder = folder + "/alpha(" + argv[5] + ")";
         if (stat(secfolder.c_str(), &info) != 0)
         {
             mkdir(secfolder.c_str(), S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH);
@@ -86,7 +85,7 @@ int main(int argc, char **argv)
             file1 = secfolder + "/energy.bin";
             file2 = secfolder + "/pzero.bin";
             file3 = secfolder + "/norm.bin";
-            file4 = secfolder + "/startvec.bin";
+            file4 = secfolder + "/startvec.txt";
             file5 = secfolder + "/pone.bin";
             file6 = secfolder + "/pminusone.bin";
             file7 = secfolder + "/compmid.bin";
@@ -104,7 +103,7 @@ int main(int argc, char **argv)
             file1 = secfolder + "/energy.bin";
             file2 = secfolder + "/pzero.bin";
             file3 = secfolder + "/norm.bin";
-            file4 = secfolder + "/startvec.bin";
+            file4 = secfolder + "/startvec.txt";
             file5 = secfolder + "/pone.bin";
             file6 = secfolder + "/pminusone.bin";
             file7 = secfolder + "/compmid.bin";
@@ -117,118 +116,71 @@ int main(int argc, char **argv)
             ofstream outFile7(file7, ios::binary | ios::trunc);
         }
     }
-    ofstream myfile("./Recursive(" + string(argv[5]) + ")" + "/xi(" + argv[9] + ")" + "/log.txt",std::ofstream::trunc); 
+
+    std::string filename = std::string("./Omega/alpha(") + argv[5] + ")/log.txt";
+    std::ofstream myfile(filename.c_str(), std::ofstream::trunc);
     for (int l = 0; l < 15; l++)
     {
         myfile << argv[l] << endl;
     }
     myfile.close();
-
-    double staart = 7.0;
-    double stop = 3.0;  
-    double period = 1;
-    double tolerance = 0.1;
     std::vector<double> Enot = {-1.78878, -1.33827, -0.908747, -0.518153};
     int count = 0;
-    for (double g = staart; g > stop; g -= period)
+    readvec(file4, complexArray, N);
+    newnorm.push_back(c_array_norm(complexArray, N));
+    double normm = newnorm[0];
+    energy.push_back(Enot[count]);
+    for (size_t s = 0; s < ens; s++)
     {
-        cout<<g<<endl;
-        readvec(file4, complexArray, N);
-        newnorm.push_back(c_array_norm(complexArray, N));
-        double normm = newnorm[0];
-        energy.push_back(Enot[count]);
-        count++;
-        for (size_t s = 0; s < ens; s++)
+        //std::cout << s << endl;
+        int k = 0;
+        for (size_t i = 0; i < steps - 1; i++)
         {
-            //std::cout << s << endl;
-            int k = 0;
-            while (abs(energy[0]-energy.back()) > 0.01 || k == 0)
+            complexArray = EnoughtpartDelta(complexArray, alpha, energy[0], normm, xi, lambda, dt, N, delta, bond, i);
+            normm = c_array_norm(complexArray, N);
+            if (i % samples == 0)
             {
-                for (size_t i = 0; i < steps - 1; i++)
-                {
-                    complexArray = EnoughtpartDelta(complexArray, g, energy[0], normm, xi, lambda, dt, N, delta, bond, i);
-                    normm = c_array_norm(complexArray, N);
-                    if (i % samples == 0)
-                    {
-                        k++;
-                        //if (k% 100 == 0)
-                        //{
-                        //    std::cout<<k<<endl;
-                        //}
-                        
-                        //if (k == 2400)
-                        //{
-                        //    cout<<"Hi"<<endl;
-                        //    writecomp(file4, complexArray);
-                        //} 
-                        pzero.push_back(norm(complexArray[int(N / 2)]));
-                        pone.push_back(norm(complexArray[int(N / 2) + 1]));
-                        pminusone.push_back(norm(complexArray[int(N / 2) - 1]));
-                        energy.push_back(H(complexArray, g, N).real());
-                        newnorm.push_back(normm);
-                        midcompvec.push_back(complexArray[int(N / 2)]);
-                    }
-                }
+                k++;
+                //if (k% 100 == 0)
+                //{
+                //    std::cout<<k<<endl;
+                //}
                 
-                for (size_t i = 0; i < steps - 1; i++)
-                {
-                    complexArray = Enoughtpart(complexArray, g, energy[0], normm, xi, lambda, dt, N);
-                    normm = c_array_norm(complexArray, N);
-                    if (i % samples == 0)
-                    {
-                        k++;
-                        //if (k% 100 == 0)
-                        //{
-                        //    std::cout<<k<<endl;
-                        //}
-
-                        if (std::abs(g - 7.99) < tolerance || std::abs(g - 7) < tolerance || std::abs(g - 6) < tolerance || std::abs(g - 5) < tolerance || std::abs(g - 4) < tolerance)
-                        //if (g<5)
-                        {
-                            pzero.push_back(norm(complexArray[int(N / 2)]));
-                            pone.push_back(norm(complexArray[int(int(N / 2) + 1)]));
-                            pminusone.push_back(norm(complexArray[int(int(N / 2) - 1)]));
-                            energy.push_back(H(complexArray, g, N).real());
-                            newnorm.push_back(normm);
-                            midcompvec.push_back(complexArray[int(N / 2)]);
-                        }
-                    }
-                }
+                //if (k == 2400)
+                //{
+                //    cout<<"Hi"<<endl;
+                //    writecomp(file4, complexArray);
+                //} 
+                pzero.push_back(norm(complexArray[int(N / 2)]));
+                pone.push_back(norm(complexArray[int(N / 2) + 1]));
+                pminusone.push_back(norm(complexArray[int(N / 2) - 1]));
+                energy.push_back(H(complexArray, alpha, N).real());
+                newnorm.push_back(normm);
+                midcompvec.push_back(complexArray[int(N / 2)]);
             }
         }
-        
-        if (std::abs(g - 7.99) < tolerance || std::abs(g - 7) < tolerance || std::abs(g - 6) < tolerance || std::abs(g - 5) < tolerance || std::abs(g - 4) < tolerance)
-        //if (g<5)
-        {
-            cout<< norm(complexArray[int(N / 2)]) << " " << complexArray[int(N / 2)] <<endl;
-            saveComplexVector(file, complexArray);
-            saveComplexVector(file7, midcompvec);
-            cout<<"h2"<<endl;
-            writeline(energy, file1);
-            writeline(newnorm, file3);
-            std::cout<<"pzero: "<<pzero[0]<<endl;    
-            std::cout<<"energy: "<<energy.back()<<endl;                    
-            writeline(pzero,file2);
-            writeline(pone,file5);
-            writeline(pminusone,file6);
-        }
-        writecomp(file4, complexArray);
-        energy.clear();
-        newnorm.clear();
-        pzero.clear();
-        pone.clear();
-        pminusone.clear();
-        complexArray.clear();
-        midcompvec.clear();                
     }
+    cout<< norm(complexArray[int(N / 2)]) << " " << complexArray[int(N / 2)] <<endl;
+    saveComplexVector(file, complexArray);
+    saveComplexVector(file7, midcompvec);
+    cout<<"h2"<<endl;
+    writeline(energy, file1);
+    writeline(newnorm, file3);
+    std::cout<<"pzero: "<<pzero[0]<<endl;    
+    std::cout<<"energy: "<<energy.back()<<endl;                    
+    writeline(pzero,file2);
+    writeline(pone,file5);
+    writeline(pminusone,file6);  
+    writecomp(file4, complexArray);               
+    
     auto end = steady_clock::now();
     auto duration = duration_cast<seconds>(end - start).count();
     std::cout << "duration"
               << "\t" << duration << endl;
 
     return 0;
-}
 
+}
 
 vector<complex<double>> Enoughtpart(vector<complex<double>> &a, double alpha, double Enought, double newnorm, double xi, double lambda, double dt, int N)
 {
@@ -347,8 +299,8 @@ void localizedArray(vector<complex<double>> &complexArray)
 }
 
 void readvec(const std::string& filePath, vector<complex<double>>& complexVector, size_t N) {
-    // Open the binary file for reading in binary mode
-    ifstream file(filePath, ios::binary);
+    // Open the text file for reading
+    ifstream file(filePath);
 
     // Check if the file is opened successfully
     if (!file.is_open()) {
@@ -361,22 +313,16 @@ void readvec(const std::string& filePath, vector<complex<double>>& complexVector
         double realPart, imagPart;
 
         // Read the real and imaginary parts from the file
-        if (!file.read(reinterpret_cast<char*>(&realPart), sizeof(double))) {
-            cerr << "Error reading real part from file." << endl;
-            break;
-        }
-
-        if (!file.read(reinterpret_cast<char*>(&imagPart), sizeof(double))) {
-            cerr << "Error reading imaginary part from file." << endl;
+        if (!(file >> realPart >> imagPart)) {
+            cerr << "Error reading complex number from file." << endl;
             break;
         }
 
         // Create a complex number and add it to the vector
         complex<double> complexValue(realPart, imagPart);
-        //complexVector.push_back(complexValue);
         complexVector[i] = complexValue;
     }
-
+    
     // Close the file
     file.close();
 }
