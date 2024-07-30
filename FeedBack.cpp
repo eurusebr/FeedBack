@@ -36,17 +36,21 @@ void readvec(const std::string& filePath, vector<complex<double>>& complexVector
 void NormalizedGaussian(std::vector<std::complex<double>>& result, double peak, double standardDeviation);
 void writecompadd(const std::string& file_path, vector<complex<double>>& complex_vector);
 void saveComplexVector(const std::string& file_path, const std::vector<std::complex<double>>& complex_vector);
-std::vector<std::complex<double>> readComplexVector(const std::string& file_path);
+vector<complex<double>> readComplexVector(const std::string& file_path);
 void generateGaussianNoise(vector<complex<double>> &pair, double mu, double sigma, int N);
-vector<complex<double>> AdditiveNoise(vector<complex<double>> &a, double alpha, double Enought, double newnorm, double xi, double lambda, double dt, int N, double Npower);
+vector<complex<double>> AdditiveNoise(vector<complex<double>> &a, double alpha, double Enought, double newnorm, double xi, double lambda, double dt, int N, double Npower, string& file9);
 void saveComplexVectortxt(const std::string& file_path, const std::vector<std::complex<double>>& complex_vector);
+void saveCheck(const std::string& file_path, const std::vector<std::complex<double>>& complex_vector);
+void readCD(const std::string& filePath, vector<complex<double>>& complexVector);
+void writeColumn(const vector<double>& vec1, const vector<double>& vec2, const vector<double>& vec3, const std::string& filename);
+void writeColumn5(const vector<double>& vec1, const vector<double>& vec2, const vector<double>& vec3, const vector<double>& vec4, const vector<double>& vec5, const std::string& filename);
+vector<complex<double>> ImagAdditiveNoise(vector<complex<double>> &a, double alpha, double Enought, double newnorm, double xi, double lambda, double dt, int N, double Npower);
+vector<complex<double>> RealAdditiveNoise(vector<complex<double>> &a, double alpha, double Enought, double newnorm, double xi, double lambda, double dt, int N, double Npower);
+void generateGaussianRealNoise(vector<complex<double>> &pair, double mu, double sigma, int N);
+void generateGaussianImagNoise(vector<complex<double>> &pair, double mu, double sigma, int N);
 
 int main(int argc, char **argv)
 {
-
-#include <iostream>
-#include <vector>
-#include <sstream>
 
     if (argc < 14) {
         cerr << "Usage: " << argv[0] << " <model> <other_arguments>" << endl;
@@ -68,11 +72,13 @@ int main(int argc, char **argv)
     int samples = stod(argv[12]);
     double delta = stod(argv[13]); 
     int bond = stod(argv[14]);
-    double Npower = stod(argv[15]);
+    double Npower = stod(argv[15]); 
+
 
     auto start = steady_clock::now();
         
-    string file, file1, file2, file3, file4, file5, file6, file7, file8;
+    string file, file1, file2, file3, file4, file5, file6, file7, file8, file9;
+    ofstream outFile1;
     vector<double> pzero, energy, pone, pminusone;
     vector<double> subamp;
     vector<double> subbamp(N);
@@ -348,46 +354,50 @@ int main(int argc, char **argv)
     if (model == "Damping")
     {
         // Create a new directory
-        string folder = "./Damping_alpha(" + string(argv[5]) + ")";
+        //string folder = "./Damping_alpha(" + string(argv[5]) + ")";
+        string folder = "./Test";
         struct stat info;
         if (stat(folder.c_str(), &info) != 0)
         {
             mkdir(folder.c_str(), S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH);
-            string secfolder = folder + "/xi(" + argv[9] + ")";
+            string secfolder = folder + "/Alpha(" + argv[5] + ")";
             mkdir(secfolder.c_str(), S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH);
             file = secfolder + "/lambda(" + argv[8] + ").bin";
-            file1 = secfolder + "/energy.bin";
-            file2 = secfolder + "/pzero.bin";
-            file3 = secfolder + "/norm.bin";
-            file4 = secfolder + "/startvec.bin";
+            file1 = secfolder + "/combined_data.txt";
+            //file1 = secfolder + "/energy.bin";
+            //file2 = secfolder + "/pzero.bin";
+            //file3 = secfolder + "/norm.bin";
+            file4 = secfolder + "/startvec.txt";
         }
         else if (info.st_mode & S_IFDIR)
         {
-            string secfolder = folder + "/xi(" + argv[9] + ")";
+            string secfolder = folder + "/Alpha(" + argv[5] + ")";
             if (stat(secfolder.c_str(), &info) != 0)
             {
                 mkdir(secfolder.c_str(), S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH);
                 file = secfolder + "/lambda(" + argv[8] + ").bin";
-                file1 = secfolder + "/energy.bin";
-                file2 = secfolder + "/pzero.bin";
-                file3 = secfolder + "/norm.bin";
-                file4 = secfolder + "/startvec.bin";
+                file1 = secfolder + "/combined_data.txt";
+                //file1 = secfolder + "/energy.bin";
+                //file2 = secfolder + "/pzero.bin";
+                //file3 = secfolder + "/norm.bin";
+                file4 = secfolder + "/startvec.txt";
                 ofstream outFile(file, ios::binary | ios::trunc);
                 ofstream outFile1(file1, ios::binary | ios::trunc);
-                ofstream outFile2(file2, ios::binary | ios::trunc);
-                ofstream outFile3(file3, ios::binary | ios::trunc);
+                //ofstream outFile2(file2, ios::binary | ios::trunc);
+                //ofstream outFile3(file3, ios::binary | ios::trunc);
             }
             else
             {
                 file = secfolder + "/lambda(" + argv[8] + ").bin";
-                file1 = secfolder + "/energy.bin";
-                file2 = secfolder + "/pzero.bin";
-                file3 = secfolder + "/norm.bin";
-                file4 = secfolder + "/startvec.bin";
+                file1 = secfolder + "/combined_data.txt";
+                //file1 = secfolder + "/energy.bin";
+                //file2 = secfolder + "/pzero.bin";
+                //file3 = secfolder + "/norm.bin";
+                file4 = secfolder + "/startvec.txt";
                 ofstream outFile(file, ios::binary | ios::trunc);
                 ofstream outFile1(file1, ios::binary | ios::trunc);
-                ofstream outFile2(file2, ios::binary | ios::trunc);
-                ofstream outFile3(file3, ios::binary | ios::trunc);
+                //ofstream outFile2(file2, ios::binary | ios::trunc);
+                //ofstream outFile3(file3, ios::binary | ios::trunc);
             }
         }
 
@@ -396,22 +406,27 @@ int main(int argc, char **argv)
         {
             int k = 0;
             std::cout << s << endl;
-            localizedArray(complexArray);
+            //localizedArray(complexArray);
+            readCD(file4, complexArray);
+            cout << complexArray[int(N / 2)+1] << endl;
             //readvec(file4, complexArray, N);
             //NormalizedGaussian(complexArray, 0.828665, 0.8);
             newnorm.push_back(c_array_norm(complexArray, N));
             double normm = newnorm[0];
+            double Enot = H(complexArray, alpha, N).real();
+            energy.push_back(Enot);
+            pzero.push_back(norm(complexArray[int(N / 2)+1]));
             //cout << c_array_norm(complexArray, N) << endl;
             //normalize(complexArray, N);
             //energy.push_back(H(complexArray, alpha, N).real());
-            energy.push_back(2.0-(alpha/2)-2/alpha);
+            //energy.push_back(2.0-(alpha/2)-2/alpha);
             //normarray(amplitude, complexArray, 0, ens);
             //std::memcpy(&subamp[0], &amplitude[0][int(N/2) - 20], 40 * sizeof(double));
             //write(subamp, file);
             for (size_t i = 0; i < steps - 1; i++)
             {
-                //complexArray = Enoughtpart(complexArray, alpha, energy[0], newnorm, xi, lambda, dt, N);
-                complexArray = EnoughtpartDelta(complexArray, alpha, energy[0], normm, xi, lambda, dt, N, delta, bond);
+                complexArray = Enoughtpart(complexArray, alpha, Enot, normm, xi, lambda, dt, N);
+                //complexArray = EnoughtpartDelta(complexArray, alpha, energy[0], normm, xi, lambda, dt, N, delta, bond);
                 normm = c_array_norm(complexArray, N);
                 //normalize(complexArray, N);
                 
@@ -432,9 +447,9 @@ int main(int argc, char **argv)
                         std::cout<<k<<endl;
                     }
                     
-                    if (k == 2400)
-                    {
-                        std::cout<<"Hi"<<endl;
+//                    if (k == 2400)
+//                    {
+//                        std::cout<<"Hi"<<endl;
                         //std::memcpy(&subamp[0], &amplitude[i][int(N/2) - 20], 40 * sizeof(double));
                         //write(amplitude[i], file);
 /*                         for (int l = 0; l < N; l++)
@@ -442,19 +457,20 @@ int main(int argc, char **argv)
                             amp.push_back(norm(complexArray[l]));
                         }  */
                         //write(amp, file4);
-                        writecomp(file4, complexArray);
+//                        writecomp(file4, complexArray);
                         //cout<<energy[i]<<endl;
-                    } 
+//                    } 
                     //std::memcpy(&subamp[0], &amplitude[i][int(N/2) - 20], 40 * sizeof(double));
                     //write(subamp, file);
                     //write(amplitude[i], file);
 
-                    pzero.push_back(norm(complexArray[int(N / 2)]));
+                    pzero.push_back(norm(complexArray[int(N / 2)+1]));
                     energy.push_back(H(complexArray, alpha, N).real());
                     newnorm.push_back(normm);
+                    
 
                 }
-
+                
             }
         }
 
@@ -472,18 +488,25 @@ int main(int argc, char **argv)
             //}
         //}
         //write(subamp, file);
-        writeline(energy, file1);
-        write(newnorm, file3);
+//        writeline(energy, file1);
+//        write(newnorm, file3);
+        cout << "Energy size: " << energy.size()<<endl;
+        cout << "pzero size: " << pzero.size()<<endl;
+        cout << "newnorm size: " << newnorm.size()<<endl;
+        writeColumn(energy, newnorm, pzero, file1);
+        //writeColumn(outFile1, pzero, pzero.size(), 1);
+        //writeColumn(outFile1, newnorm, newnorm.size(), 2);
+
         //ave.push_back(accumulate( pzero.begin(), pzero.end(), 0.0)/pzero.size());  
-        std::cout<<pzero[0]<<endl;            
-        write(pzero,file2);
+//        std::cout<<pzero[0]<<endl;            
+//        write(pzero,file2);
         
-        ofstream myfile("./Damping_alpha(" + string(argv[5]) + ")" + "/xi(" + argv[9] + ")" + "/log.txt",std::ofstream::trunc); 
-        for (int l = 0; l < 13; l++)
-        {
-            myfile << argv[l] << endl;
-        }
-        myfile.close();
+//        ofstream myfile("./Damping_alpha(" + string(argv[5]) + ")" + "/xi(" + argv[9] + ")" + "/log.txt",std::ofstream::trunc); 
+//        for (int l = 0; l < 13; l++)
+//        {
+//            myfile << argv[l] << endl;
+//        }
+//        myfile.close();
     }
 
     if (model == "Adiabatic")
@@ -612,7 +635,8 @@ int main(int argc, char **argv)
     
     if (model == "Additive")
     {
-        string folder = "./AdditiveNoise";
+        //string folder = "./AdditiveNoise";
+        string folder = "./AdditiveReal/";
         struct stat info;
         if (stat(folder.c_str(), &info) != 0)
         {
@@ -620,14 +644,15 @@ int main(int argc, char **argv)
             string secfolder = folder + "/Alpha(" + argv[5] + ")"+ "/Npower(" + argv[15] + ")";
             mkdir(secfolder.c_str(), S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH);
             file = secfolder + "/alphavec.txt";
-            file1 = secfolder + "/energy.bin";
-            file2 = secfolder + "/pzero.bin";
-            file3 = secfolder + "/norm.bin";
+            file1 = secfolder + "/combined_data.txt";
+            //file2 = secfolder + "/pzero.bin";
+            //file3 = secfolder + "/norm.bin";
             file4 = secfolder + "/startvec.txt";
-            file5 = secfolder + "/pone.bin";
-            file6 = secfolder + "/pminusone.bin";
+            //file5 = secfolder + "/pone.bin";
+            //file6 = secfolder + "/pminusone.bin";
             file7 = secfolder + "/compmid.bin";
             file8 = secfolder + "/lambda.bin";
+            file9 = secfolder + "/check.txt";
         }
         else if (info.st_mode & S_IFDIR)
         {
@@ -636,66 +661,78 @@ int main(int argc, char **argv)
             {
                 mkdir(secfolder.c_str(), S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH);
                 file = secfolder + "/alphavec.txt";
-                file1 = secfolder + "/energy.bin";
-                file2 = secfolder + "/pzero.bin";
-                file3 = secfolder + "/norm.bin";
+                file1 = secfolder + "/combined_data.txt";
+                file2 = secfolder + "/first.txt";
+                file3 = secfolder + "/second.txt";
                 file4 = secfolder + "/startvec.txt";
-                file5 = secfolder + "/pone.bin";
-                file6 = secfolder + "/pminusone.bin";
+                //file5 = secfolder + "/pone.bin";
+                //file6 = secfolder + "/pminusone.bin";
                 file7 = secfolder + "/compmid.bin";
                 file8 = secfolder + "/lambda.bin";
                 ofstream outFile(file, ios::binary | ios::trunc);
                 ofstream outFile1(file1, ios::binary | ios::trunc);
                 ofstream outFile2(file2, ios::binary | ios::trunc);
                 ofstream outFile3(file3, ios::binary | ios::trunc);
-                ofstream outFile5(file5, ios::binary | ios::trunc);
-                ofstream outFile6(file6, ios::binary | ios::trunc);
+                //ofstream outFile5(file5, ios::binary | ios::trunc);
+                //ofstream outFile6(file6, ios::binary | ios::trunc);
                 ofstream outFile7(file7, ios::binary | ios::trunc);
                 ofstream outFile8(file8, ios::binary | ios::trunc);
             }
             else
             {
                 file = secfolder + "/alphavec.txt";
-                file1 = secfolder + "/energy.bin";
-                file2 = secfolder + "/pzero.bin";
-                file3 = secfolder + "/norm.bin";
+                file1 = secfolder + "/combined_data.txt";
+                file2 = secfolder + "/first.txt";
+                file3 = secfolder + "/second.txt";
                 file4 = secfolder + "/startvec.txt";
-                file5 = secfolder + "/pone.bin";
-                file6 = secfolder + "/pminusone.bin";
+                //file5 = secfolder + "/pone.bin";
+                //file6 = secfolder + "/pminusone.bin";
                 file7 = secfolder + "/compmid.bin";
                 file8 = secfolder + "/lambda.bin";
                 ofstream outFile(file, ios::binary | ios::trunc);
                 ofstream outFile1(file1, ios::binary | ios::trunc);
                 ofstream outFile2(file2, ios::binary | ios::trunc);
                 ofstream outFile3(file3, ios::binary | ios::trunc);
-                ofstream outFile5(file5, ios::binary | ios::trunc);
-                ofstream outFile6(file6, ios::binary | ios::trunc);
+                //ofstream outFile5(file5, ios::binary | ios::trunc);
+                //ofstream outFile6(file6, ios::binary | ios::trunc);
                 ofstream outFile7(file7, ios::binary | ios::trunc);
                 ofstream outFile8(file8, ios::binary | ios::trunc);
             }
         }
 
-        ofstream myfile("./AdditiveNoise/Alpha(" + string(argv[5]) + ")" + "/Npower(" + string(argv[15]) + ")" + "/log.txt",std::ofstream::trunc); 
+        ofstream myfile("./AdditiveReal/Alpha(" + string(argv[5]) + ")" + "/Npower(" + string(argv[15]) + ")" + "/log.txt",std::ofstream::trunc); 
 
         for (int l = 0; l < 16; l++)
         {
             myfile << argv[l] << endl;
         }
         myfile.close();
-        std::vector<double> Enot = {-1.4232676655097758,-1.78878, -1.33827, -0.908747, -0.518153};
-        readvec(file4, complexArray, N);
+        //readvec(file4, complexArray, N);
+        readCD(file4, complexArray);
+        saveComplexVectortxt(file2, complexArray);
+        cout << complexArray[int(N / 2)+1] << endl;
+        cout << "pzero: " << norm(complexArray[int(N / 2)+1]) << endl;
+        double Enot = H(complexArray, alpha, N).real(); 
+        cout << "Energy: " << Enot << endl;
         newnorm.push_back(c_array_norm(complexArray, N));
         double normm = newnorm[0];
-        energy.push_back(Enot[0]);
-
+        cout << "Norm: " << normm << endl;
+        energy.push_back(Enot);
+        pzero.push_back(norm(complexArray[int(N / 2)+1]));
+        pone.push_back(norm(complexArray[int(N / 2) + 2]));
+        pminusone.push_back(norm(complexArray[int(N / 2)]));
         for (size_t s = 0; s < ens; s++)
         {
             //std::cout << s << endl;
             int k = 0;
             for (size_t i = 0; i < steps - 1; i++)
             {
-                complexArray = AdditiveNoise(complexArray, alpha, Enot[0], normm, xi, lambda, dt, N, Npower);
+                complexArray = RealAdditiveNoise(complexArray, alpha, Enot, normm, xi, lambda, dt, N, Npower);
                 normm = c_array_norm(complexArray, N);
+                if (i == 0)
+                {
+                    saveComplexVectortxt(file3, complexArray);
+                }
                 if (i % samples == 0)
                 {
                     k++;
@@ -709,34 +746,25 @@ int main(int argc, char **argv)
                     //    cout<<"Hi"<<endl;
                     //    writecomp(file4, complexArray);
                     //} 
-                    for (int l = 480; l <= 520; ++l) 
+                    for (int l = 475; l <= 526; ++l) 
                     {
                         subamp.push_back(std::abs(complexArray[l]));
                     }
                     writeline(subamp, file8);
                     subamp.clear();
-                    pzero.push_back(norm(complexArray[int(N / 2)]));
-                    pone.push_back(norm(complexArray[int(N / 2) + 1]));
-                    pminusone.push_back(norm(complexArray[int(N / 2) - 1]));
+                    pzero.push_back(norm(complexArray[int(N / 2)+1]));
+                    pone.push_back(norm(complexArray[int(N / 2) + 2]));
+                    pminusone.push_back(norm(complexArray[int(N / 2)]));
                     energy.push_back(H(complexArray, alpha, N).real());
                     newnorm.push_back(normm);
-                    midcompvec.push_back(complexArray[int(N / 2)]);
+                    midcompvec.push_back(complexArray[int(N / 2)+1]);
                 }
             }
         }
-        
-        cout<< norm(complexArray[int(N / 2)]) << " " << complexArray[int(N / 2)] <<endl;
+        std::cout<< norm(complexArray[int(N / 2)+1]) <<endl;
         saveComplexVectortxt(file, complexArray);
         saveComplexVector(file7, midcompvec);
-        cout<<"h2"<<endl;
-        writeline(energy, file1);
-        writeline(newnorm, file3);
-        std::cout<<"pzero: "<<pzero[0]<<endl;    
-        std::cout<<"energy: "<<energy.back()<<endl;                    
-        writeline(pzero,file2);
-        writeline(pone,file5);
-        writeline(pminusone,file6);
-        writecomp(file4, complexArray);
+        writeColumn5(energy, newnorm, pzero, pone, pminusone, file1);                  
         energy.clear();
         newnorm.clear();
         pzero.clear();
@@ -826,7 +854,6 @@ vector<complex<double>> Enoughtpart(vector<complex<double>> &a, double alpha, do
         int R = (i + 1) % N;
 
         result[i] = (I - xi * (ham - Enought)) * dt * ((-a[R] - a[L] + 2.0 * a[i]) - (alpha * norm(a[i]) * a[i])) + a[i] + common_term * a[i];
-        
 
     }
 
@@ -994,6 +1021,20 @@ void readvec(const std::string& filePath, vector<complex<double>>& complexVector
     file.close();
 }
 
+void readCD(const std::string& filePath, vector<complex<double>>& complexVector) {
+    std::ifstream inputFile(filePath);
+    double value;
+
+    int i = 0;
+    // Read data from file and store in complex vector
+    while (inputFile >> value) {
+        complexVector[476+i] = complex<double>(value, 0.0); // Real part is 'value', imaginary part is '0.0'
+        i++;
+    }
+
+    // Close the file
+    inputFile.close();
+}
 
 void NormalizedGaussian(std::vector<std::complex<double>>& result, double peak, double standardDeviation) {
     int size = result.size();
@@ -1089,10 +1130,63 @@ void generateGaussianNoise(vector<complex<double>> &pair, double mu, double sigm
     }
 }
 
-vector<complex<double>> AdditiveNoise(vector<complex<double>> &a, double alpha, double Enought, double newnorm, double xi, double lambda, double dt, int N, double Npower)
+void generateGaussianImagNoise(vector<complex<double>> &pair, double mu, double sigma, int N)
+{
+    constexpr double two_pi = 2.0 * M_PI;
+
+    //initialize the random uniform number generator (runif) in a range 0 to 1
+    static std::mt19937 rng(std::random_device{}()); // Standard mersenne_twister_engine seeded with rd()
+    static std::uniform_real_distribution<> runif(0.0, 1.0);
+    //create two random numbers, make sure u1 is greater than zero
+    double u1, u2;
+
+    for (size_t l = 0; l < N; ++l)
+    {
+        do
+        {
+            u1 = runif(rng);
+        }
+        while (u1 == 0);
+        u2 = runif(rng);
+        //compute z0 and z1
+        auto mag = sigma * sqrt(-2.0 * log(u1));
+        auto real_part = 0.0;
+        auto imag_part = mag * sin(two_pi * u2) + mu;
+        pair.push_back(std::complex<double>(real_part, imag_part));
+    }
+}
+
+void generateGaussianRealNoise(vector<complex<double>> &pair, double mu, double sigma, int N)
+{
+    constexpr double two_pi = 2.0 * M_PI;
+
+    //initialize the random uniform number generator (runif) in a range 0 to 1
+    static std::mt19937 rng(std::random_device{}()); // Standard mersenne_twister_engine seeded with rd()
+    static std::uniform_real_distribution<> runif(0.0, 1.0);
+    //create two random numbers, make sure u1 is greater than zero
+    double u1, u2;
+
+    for (size_t l = 0; l < N; ++l)
+    {
+        do
+        {
+            u1 = runif(rng);
+        }
+        while (u1 == 0);
+        u2 = runif(rng);
+        //compute z0 and z1
+        auto mag = sigma * sqrt(-2.0 * log(u1));
+        auto real_part = mag * cos(two_pi * u2) + mu;
+        auto imag_part = 0.0;
+        pair.push_back(std::complex<double>(real_part, imag_part));
+    }
+}
+
+vector<complex<double>> AdditiveNoise(vector<complex<double>> &a, double alpha, double Enought, double newnorm, double xi, double lambda, double dt, int N, double Npower, string& file9)
 {
     vector<complex<double>> adnoise;
     generateGaussianNoise(adnoise,0.0, 1.0,N);
+    //saveCheck(file9, adnoise);
     vector<complex<double>> result(N);
     complex<double> ham = H(a, alpha, N);
     double common_term = -lambda * (newnorm - 1);
@@ -1122,4 +1216,98 @@ void saveComplexVectortxt(const std::string& file_path, const std::vector<std::c
 
     // Close the file
     file.close();
+}
+
+void saveCheck(const std::string& file_path, const std::vector<std::complex<double>>& complex_vector) {
+    // Open the file for appending
+    std::ofstream file(file_path, std::ios::app);
+
+    if (!file) {
+        std::cerr << "Error opening file: " << file_path << std::endl;
+        return;
+    }
+
+    // Write each complex number as a pair of real and imaginary parts
+    for (const auto& complex_value : complex_vector) {
+        file << complex_value.real() << " " << complex_value.imag() << "\n";
+    }
+
+    // Close the file
+    file.close();
+}
+
+vector<complex<double>> RealAdditiveNoise(vector<complex<double>> &a, double alpha, double Enought, double newnorm, double xi, double lambda, double dt, int N, double Npower)
+{    
+    vector<complex<double>> adnoise;
+    generateGaussianRealNoise(adnoise,0.0, 1.0,N);
+    //saveCheck(file9, adnoise);
+    vector<complex<double>> result(N);
+    complex<double> ham = H(a, alpha, N);
+    double common_term = -lambda * (newnorm - 1);
+
+    for (size_t i = 0; i < N; i++)
+    {
+        int L = (i + N - 1) % N;
+        int R = (i + 1) % N;
+        result[i] = (I - xi * (ham - Enought)) * dt * ((-a[R] - a[L] + 2.0 * a[i]) - (alpha * norm(a[i]) * a[i])) + a[i] + common_term * a[i] + sqrt(dt)*Npower*adnoise[i];
+    }
+    return result;
+}
+
+vector<complex<double>> ImagAdditiveNoise(vector<complex<double>> &a, double alpha, double Enought, double newnorm, double xi, double lambda, double dt, int N, double Npower)
+{
+    std::vector<complex<double>> adnoise;
+    generateGaussianImagNoise(adnoise,0.0, 1.0,N);
+    //saveCheck(file9, adnoise);
+    vector<complex<double>> result(N);
+    complex<double> ham = H(a, alpha, N);
+    double common_term = -lambda * (newnorm - 1);
+
+    for (size_t i = 0; i < N; i++)
+    {
+        int L = (i + N - 1) % N;
+        int R = (i + 1) % N;
+        result[i] = (I - xi * (ham - Enought)) * dt * ((-a[R] - a[L] + 2.0 * a[i]) - (alpha * norm(a[i]) * a[i])) + a[i] + common_term * a[i] + sqrt(dt)*Npower*adnoise[i];
+    }
+    return result;
+}
+
+void writeColumn(const vector<double>& vec1, const vector<double>& vec2, const vector<double>& vec3, const std::string& filename)
+{
+    // Ensure all vectors are of the same size
+    if (vec1.size() != vec2.size() || vec1.size() != vec3.size()) {
+        std::cerr << "Error: All vectors must be of the same size." << std::endl;
+        return;
+    }
+
+    std::ofstream outfile(filename);
+    if (!outfile.is_open()) {
+        std::cerr << "Error: Could not open the file." << std::endl;
+        return;
+    }
+
+    size_t size = vec1.size();
+    for (size_t i = 0; i < size; ++i) {
+        outfile << vec1[i] << "\t" << vec2[i] << "\t" << vec3[i] << "\n";
+    }
+
+    outfile.close();
+    cout << "Data written to file successfully." << std::endl;
+}
+
+void writeColumn5(const vector<double>& vec1, const vector<double>& vec2, const vector<double>& vec3, const vector<double>& vec4, const vector<double>& vec5, const std::string& filename)
+{
+    std::ofstream outfile(filename);
+    if (!outfile.is_open()) {
+        std::cerr << "Error: Could not open the file." << std::endl;
+        return;
+    }
+
+    size_t size = vec1.size();
+    for (size_t i = 0; i < size; ++i) {
+        outfile << vec1[i] << "\t" << vec2[i] << "\t" << vec3[i] << "\t" << vec4[i] << "\t" << vec5[i] << "\n";
+    }
+
+    outfile.close();
+    std::cout << "Data written to file successfully." << std::endl;
 }
